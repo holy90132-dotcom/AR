@@ -2,296 +2,675 @@
 <html lang="zh-Hant">
 
 <head>
+  <meta charset="utf-8">
 
-<meta charset="utf-8">
+  <meta
+    name="viewport"
+    content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"
+  >
 
-<meta
-  name="viewport"
-  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
->
+  <meta
+    name="apple-mobile-web-app-capable"
+    content="yes"
+  >
 
-<meta
-  name="apple-mobile-web-app-capable"
-  content="yes"
->
+  <meta
+    name="theme-color"
+    content="#15171c"
+  >
 
-<title>AR Story</title>
+  <title>For You</title>
 
 
-<!-- MindAR -->
+  <!-- MindAR -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image.prod.js"></script>
 
-<script
-  src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image.prod.js">
-</script>
+  <!-- A-Frame -->
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
 
+  <!-- MindAR + A-Frame -->
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image-aframe.prod.js"></script>
 
-<!-- A-Frame -->
 
-<script
-  src="https://aframe.io/releases/1.2.0/aframe.min.js">
-</script>
+  <style>
 
+    * {
+      box-sizing: border-box;
+    }
 
-<!-- MindAR + A-Frame -->
 
-<script
-  src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image-aframe.prod.js">
-</script>
+    html,
+    body {
 
+      margin: 0;
 
+      width: 100%;
+      height: 100%;
 
-<style>
+      overflow: hidden;
 
-* {
-  box-sizing: border-box;
-}
+      font-family:
+        "Noto Sans TC",
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
 
-html,
-body {
+      background: #101217;
 
-  margin: 0;
+    }
 
-  width: 100%;
-  height: 100%;
 
-  overflow: hidden;
+    body::before {
 
-  background: #050914;
+      content: "";
 
-  font-family:
-    system-ui,
-    -apple-system,
-    "Segoe UI",
-    sans-serif;
+      position: fixed;
 
-}
+      inset: 0;
 
+      background:
 
+        radial-gradient(
+          circle at 30% 15%,
+          rgba(235, 205, 179, 0.18),
+          transparent 33%
+        ),
 
-#ar {
+        radial-gradient(
+          circle at 75% 80%,
+          rgba(140, 175, 213, 0.13),
+          transparent 36%
+        ),
 
-  position: fixed;
+        linear-gradient(
+          160deg,
+          #171a21 0%,
+          #10131a 55%,
+          #12171e 100%
+        );
 
-  inset: 0;
+      z-index: -2;
 
-}
+    }
 
 
+    body::after {
 
-#overlay {
+      content: "";
 
-  position: fixed;
+      position: fixed;
 
-  inset: 0;
+      inset: 0;
 
-  z-index: 30;
+      pointer-events: none;
 
-  display: grid;
+      opacity: 0.22;
 
-  place-items: center;
+      background-image:
 
-  padding: 20px;
+        radial-gradient(
+          rgba(255,255,255,.5) 0.55px,
+          transparent 0.55px
+        );
 
-  background:
-    radial-gradient(
-      circle at 50% 20%,
-      rgba(40, 130, 255, 0.25),
-      transparent 45%
-    ),
-    rgba(3, 7, 15, 0.92);
+      background-size:
+        8px 8px;
 
-}
+      z-index: -1;
 
+    }
 
 
-.panel {
 
-  width: min(90vw, 430px);
+    #ar {
 
-  padding: 24px 20px;
+      position: fixed;
 
-  border-radius: 22px;
+      inset: 0;
 
-  background:
-    rgba(12, 19, 33, 0.96);
+    }
 
-  color: white;
 
-  box-shadow:
-    0 24px 80px
-    rgba(0, 0, 0, 0.5);
 
-}
+    /* =========================
+       進場畫面
+    ========================= */
 
+    #overlay {
 
+      position: fixed;
 
-h1 {
+      inset: 0;
 
-  margin: 0 0 10px;
+      z-index: 30;
 
-  font-size: 24px;
+      display: grid;
 
-}
+      place-items: center;
 
+      padding: 24px;
 
+      background:
+        rgba(8, 10, 14, 0.26);
 
-.description {
+      backdrop-filter:
+        blur(5px);
 
-  font-size: 14px;
+      transition:
+        opacity .65s ease;
 
-  line-height: 1.7;
+    }
 
-  opacity: 0.8;
 
-}
+    #overlay.fade-out {
 
+      opacity: 0;
 
+      pointer-events: none;
 
-#startBtn {
+    }
 
-  width: 100%;
 
-  margin-top: 18px;
 
-  padding: 15px;
+    .memory-card {
 
-  border: 0;
+      position: relative;
 
-  border-radius: 14px;
+      width: min(
+        88vw,
+        410px
+      );
 
-  background: white;
+      padding:
+        38px
+        27px
+        28px;
 
-  color: #09101c;
+      overflow: hidden;
 
-  font-size: 17px;
+      border-radius:
+        30px;
 
-  font-weight: 800;
+      color:
+        #f8f5ef;
 
-  cursor: pointer;
+      background:
 
-}
+        linear-gradient(
+          145deg,
+          rgba(255,255,255,.105),
+          rgba(255,255,255,.045)
+        );
 
+      border:
+        1px solid
+        rgba(255,255,255,.13);
 
+      box-shadow:
 
-#startBtn:disabled {
+        0 30px 90px
+        rgba(0,0,0,.38),
 
-  opacity: 0.5;
+        inset 0 1px 0
+        rgba(255,255,255,.10);
 
-}
+      backdrop-filter:
+        blur(22px);
 
+    }
 
 
-#status {
 
-  margin-top: 15px;
+    .memory-card::before {
 
-  padding: 12px;
+      content: "";
 
-  min-height: 65px;
+      position: absolute;
 
-  border-radius: 14px;
+      width: 170px;
+      height: 170px;
 
-  background:
-    rgba(255, 255, 255, 0.05);
+      right: -70px;
+      top: -80px;
 
-  font-size: 13px;
+      border-radius: 50%;
 
-  line-height: 1.6;
+      background:
+        rgba(239, 207, 177, .12);
 
-  white-space: pre-wrap;
+      filter:
+        blur(1px);
 
-}
+    }
 
 
 
-#hint {
+    .memory-card::after {
 
-  position: fixed;
+      content: "";
 
-  left: 50%;
+      position: absolute;
 
-  top: 20px;
+      width: 110px;
+      height: 110px;
 
-  transform:
-    translateX(-50%);
+      left: -55px;
+      bottom: -50px;
 
-  z-index: 20;
+      border-radius: 50%;
 
-  display: none;
+      background:
+        rgba(128, 177, 219, .09);
 
-  padding:
-    10px 16px;
+    }
 
-  border-radius:
-    999px;
 
-  background:
-    rgba(0, 0, 0, 0.62);
 
-  color: white;
+    .small-title {
 
-  font-size: 14px;
+      position: relative;
 
-  white-space: nowrap;
+      z-index: 2;
 
-  backdrop-filter:
-    blur(10px);
+      margin-bottom:
+        18px;
 
-}
+      color:
+        rgba(255,255,255,.50);
 
+      font-size:
+        11px;
 
+      font-weight:
+        500;
 
-#found {
+      letter-spacing:
+        .28em;
 
-  position: fixed;
+    }
 
-  left: 50%;
 
-  bottom: 28px;
 
-  transform:
-    translateX(-50%)
-    translateY(20px);
+    h1 {
 
-  z-index: 22;
+      position: relative;
 
-  opacity: 0;
+      z-index: 2;
 
-  padding:
-    12px 18px;
+      margin:
+        0;
 
-  border-radius:
-    999px;
+      max-width:
+        310px;
 
-  background:
-    rgba(255, 255, 255, 0.96);
+      font-size:
+        28px;
 
-  color:
-    #07111e;
+      line-height:
+        1.55;
 
-  font-weight: 900;
+      font-weight:
+        600;
 
-  transition:
-    0.25s ease;
+      letter-spacing:
+        .035em;
 
-}
+    }
 
 
 
-#found.show {
+    .line {
 
-  opacity: 1;
+      position: relative;
 
-  transform:
-    translateX(-50%)
-    translateY(0);
+      z-index: 2;
 
-}
+      width:
+        38px;
 
-</style>
+      height:
+        1px;
+
+      margin:
+        22px 0;
+
+      background:
+        rgba(255,255,255,.40);
+
+    }
+
+
+
+    .message {
+
+      position: relative;
+
+      z-index: 2;
+
+      font-size:
+        14px;
+
+      line-height:
+        2;
+
+      letter-spacing:
+        .025em;
+
+      color:
+        rgba(255,255,255,.74);
+
+    }
+
+
+
+    #startBtn {
+
+      position: relative;
+
+      z-index: 2;
+
+      width:
+        100%;
+
+      margin-top:
+        28px;
+
+      padding:
+        15px 18px;
+
+      border:
+        0;
+
+      border-radius:
+        999px;
+
+      color:
+        #282421;
+
+      background:
+
+        linear-gradient(
+          180deg,
+          #f7f2eb,
+          #e9e1d7
+        );
+
+      box-shadow:
+
+        0 10px 28px
+        rgba(0,0,0,.20),
+
+        inset 0 1px 0
+        rgba(255,255,255,.9);
+
+      font-size:
+        15px;
+
+      font-weight:
+        650;
+
+      letter-spacing:
+        .05em;
+
+      cursor:
+        pointer;
+
+      transition:
+        transform .2s ease,
+        opacity .2s ease;
+
+    }
+
+
+    #startBtn:active {
+
+      transform:
+        scale(.98);
+
+    }
+
+
+    #startBtn:disabled {
+
+      opacity:
+        .45;
+
+    }
+
+
+
+    .permission-note {
+
+      position: relative;
+
+      z-index: 2;
+
+      margin-top:
+        14px;
+
+      text-align:
+        center;
+
+      color:
+        rgba(255,255,255,.40);
+
+      font-size:
+        11px;
+
+      line-height:
+        1.6;
+
+    }
+
+
+
+    #status {
+
+      position: relative;
+
+      z-index: 2;
+
+      margin-top:
+        14px;
+
+      min-height:
+        20px;
+
+      text-align:
+        center;
+
+      color:
+        rgba(255,255,255,.52);
+
+      font-size:
+        12px;
+
+      line-height:
+        1.6;
+
+      white-space:
+        pre-wrap;
+
+    }
+
+
+
+    /* =========================
+       AR 中的小提示
+    ========================= */
+
+    #hint {
+
+      position:
+        fixed;
+
+      left:
+        50%;
+
+      top:
+        20px;
+
+      transform:
+        translateX(-50%);
+
+      z-index:
+        20;
+
+      display:
+        none;
+
+      padding:
+        9px 15px;
+
+      border-radius:
+        999px;
+
+      background:
+        rgba(18, 20, 26, .48);
+
+      border:
+        1px solid
+        rgba(255,255,255,.08);
+
+      color:
+        rgba(255,255,255,.82);
+
+      font-size:
+        12px;
+
+      letter-spacing:
+        .04em;
+
+      white-space:
+        nowrap;
+
+      backdrop-filter:
+        blur(10px);
+
+      transition:
+        opacity .35s ease;
+
+    }
+
+
+
+    #toast {
+
+      position:
+        fixed;
+
+      left:
+        50%;
+
+      bottom:
+        30px;
+
+      transform:
+        translateX(-50%)
+        translateY(15px);
+
+      z-index:
+        21;
+
+      opacity:
+        0;
+
+      padding:
+        11px 17px;
+
+      border-radius:
+        999px;
+
+      background:
+        rgba(248,245,239,.92);
+
+      color:
+        #292725;
+
+      font-size:
+        12px;
+
+      font-weight:
+        600;
+
+      letter-spacing:
+        .04em;
+
+      box-shadow:
+        0 12px 30px
+        rgba(0,0,0,.20);
+
+      transition:
+        .35s ease;
+
+      pointer-events:
+        none;
+
+    }
+
+
+    #toast.show {
+
+      opacity:
+        1;
+
+      transform:
+        translateX(-50%)
+        translateY(0);
+
+    }
+
+
+
+    #soundUnlock {
+
+      position:
+        fixed;
+
+      left:
+        50%;
+
+      bottom:
+        30px;
+
+      transform:
+        translateX(-50%);
+
+      z-index:
+        25;
+
+      display:
+        none;
+
+      border:
+        1px solid
+        rgba(255,255,255,.14);
+
+      padding:
+        12px 18px;
+
+      border-radius:
+        999px;
+
+      background:
+        rgba(20,24,31,.80);
+
+      color:
+        white;
+
+      font-size:
+        13px;
+
+      backdrop-filter:
+        blur(12px);
+
+    }
+
+  </style>
 
 </head>
-
 
 
 <body>
@@ -300,38 +679,53 @@ h1 {
 <div id="ar"></div>
 
 
-
 <div id="overlay">
 
-  <div class="panel">
+  <div class="memory-card">
+
+
+    <div class="small-title">
+
+      FOR YOU
+
+    </div>
+
 
     <h1>
-      開啟故事
-    </h1>
+  時間像一場<br>
+  <span class="nowrap">緩慢的洋流</span>
+</h1>
 
-    <div class="description">
+<div class="line"></div>
 
-      請使用 Chrome 或 Safari 開啟。<br>
+<div class="message">
 
-      按下開始後允許使用相機，<br>
+  一點一點沖淡記憶，<br>
 
-      再把鏡頭對準卡片。
+  也帶走那些曾經很清楚的感受。<br><br>
+
+  但有些回憶，<br>
+
+  只是安靜地待著，<br>
+
+  等你再次靠近。
+
+</div>
+
+<button id="startBtn">
+  讓它醒來
+</button>
+
+
+    <div class="permission-note">
+
+      需要使用相機才能開始
 
     </div>
 
 
-    <button id="startBtn">
+    <div id="status"></div>
 
-      開始掃描
-
-    </button>
-
-
-    <div id="status">
-
-      等待開始…
-
-    </div>
 
   </div>
 
@@ -341,22 +735,28 @@ h1 {
 
 <div id="hint">
 
-  把鏡頭對準卡片
+  把鏡頭對準那張卡片
 
 </div>
 
 
+<div id="toast">
 
-<div id="found">
-
-  ✓ 辨識成功
+  找到了。
 
 </div>
 
+
+<button id="soundUnlock">
+
+  開啟聲音
+
+</button>
 
 
 
 <script>
+
 
 const TARGET_IMAGE =
   "./target.png";
@@ -401,9 +801,15 @@ const hint =
   );
 
 
-const found =
+const toast =
   document.getElementById(
-    "found"
+    "toast"
+  );
+
+
+const soundUnlock =
+  document.getElementById(
+    "soundUnlock"
   );
 
 
@@ -413,10 +819,40 @@ let starting =
 
 
 
-function setStatus(message) {
+function setStatus(
+  message
+) {
 
   statusEl.textContent =
     message;
+
+}
+
+
+
+function showToast(
+  message
+) {
+
+  toast.textContent =
+    message;
+
+  toast.classList.add(
+    "show"
+  );
+
+
+  setTimeout(
+    () => {
+
+      toast.classList.remove(
+        "show"
+      );
+
+    },
+
+    1600
+  );
 
 }
 
@@ -429,7 +865,7 @@ async function requestCamera() {
   ) {
 
     throw new Error(
-      "目前不是 HTTPS 網頁，無法使用相機。"
+      "請用瀏覽器開啟這個網址。"
     );
 
   }
@@ -441,14 +877,14 @@ async function requestCamera() {
   ) {
 
     throw new Error(
-      "這個瀏覽器無法使用相機。請改用 Chrome 或 Safari。"
+      "目前無法使用相機。"
     );
 
   }
 
 
 
-  const constraintsList = [
+  const tries = [
 
     {
 
@@ -463,7 +899,8 @@ async function requestCamera() {
 
       },
 
-      audio: false
+      audio:
+        false
 
     },
 
@@ -481,16 +918,19 @@ async function requestCamera() {
 
       },
 
-      audio: false
+      audio:
+        false
 
     },
 
 
     {
 
-      video: true,
+      video:
+        true,
 
-      audio: false
+      audio:
+        false
 
     }
 
@@ -505,13 +945,15 @@ async function requestCamera() {
 
   for (
     const constraints
-    of constraintsList
+    of tries
   ) {
 
     try {
 
       const stream =
-        await navigator.mediaDevices
+
+        await navigator
+          .mediaDevices
           .getUserMedia(
             constraints
           );
@@ -531,7 +973,9 @@ async function requestCamera() {
 
     }
 
-    catch (error) {
+    catch (
+      error
+    ) {
 
       lastError =
         error;
@@ -554,9 +998,12 @@ async function requestCamera() {
 
 
 
-function loadImage(url) {
+function loadImage(
+  url
+) {
 
   return new Promise(
+
     (
       resolve,
       reject
@@ -567,33 +1014,28 @@ function loadImage(url) {
 
 
       image.onload =
-        () => {
-
+        () =>
           resolve(
             image
           );
 
-        };
-
 
       image.onerror =
-        () => {
-
+        () =>
           reject(
 
             new Error(
-              "找不到 target.jpg"
+              "卡片資料載入失敗"
             )
 
           );
-
-        };
 
 
       image.src =
         url;
 
     }
+
   );
 
 }
@@ -605,11 +1047,14 @@ async function compileTarget() {
 
   const CompilerClass =
 
-    window.MINDAR?.IMAGE?.Compiler
+    window.MINDAR
+      ?.IMAGE
+      ?.Compiler
 
     ||
 
-    window.MINDAR?.Compiler;
+    window.MINDAR
+      ?.Compiler;
 
 
 
@@ -618,7 +1063,7 @@ async function compileTarget() {
   ) {
 
     throw new Error(
-      "MindAR 沒有載入成功。"
+      "載入失敗，請重新整理。"
     );
 
   }
@@ -626,8 +1071,9 @@ async function compileTarget() {
 
 
   setStatus(
-    "正在讀取卡片圖片…"
+    "正在準備…"
   );
+
 
 
   const image =
@@ -642,12 +1088,6 @@ async function compileTarget() {
 
 
 
-  setStatus(
-    "正在建立卡片辨識資料…"
-  );
-
-
-
   await compiler
     .compileImageTargets(
 
@@ -658,19 +1098,26 @@ async function compileTarget() {
         const p =
 
           Math.max(
+
             0,
+
             Math.min(
               100,
               Number(progress) || 0
             )
+
           );
 
 
         setStatus(
 
-          "正在建立卡片辨識資料…\n" +
+          "正在準備… "
 
-          p.toFixed(0) +
+          +
+
+          p.toFixed(0)
+
+          +
 
           "%"
 
@@ -688,25 +1135,22 @@ async function compileTarget() {
 
 
 
-  const blob =
-    new Blob(
-
-      [buffer],
-
-      {
-
-        type:
-          "application/octet-stream"
-
-      }
-
-    );
-
-
-
   return URL
     .createObjectURL(
-      blob
+
+      new Blob(
+
+        [buffer],
+
+        {
+
+          type:
+            "application/octet-stream"
+
+        }
+
+      )
+
     );
 
 }
@@ -719,260 +1163,226 @@ function mountAR(
 ) {
 
 
-
   ar.innerHTML = `
 
 
-  <a-scene
-
-    embedded
+    <a-scene
 
 
-    mindar-image="
-      imageTargetSrc: ${mindUrl};
-      maxTrack: 1;
-      filterMinCF: 0.001;
-      filterBeta: 0.01;
-      uiScanning: no;
-      uiLoading: no;
-      uiError: no;
-    "
+      embedded
 
 
-    renderer="
-      colorManagement: true;
-      physicallyCorrectLights: true;
-      alpha: true;
-    "
+      mindar-image="
+        imageTargetSrc: ${mindUrl};
+        maxTrack: 1;
+        filterMinCF: 0.001;
+        filterBeta: 0.01;
+        uiScanning: no;
+        uiLoading: no;
+        uiError: no;
+      "
 
 
-    vr-mode-ui="
-      enabled: false
-    "
+      renderer="
+        colorManagement: true;
+        physicallyCorrectLights: true;
+        alpha: true;
+      "
 
 
-    device-orientation-permission-ui="
-      enabled: false
-    "
-
-  >
-
-
-
-    <a-assets>
-
-
-      <!--
-      開場影片
-      不循環
-      -->
-
-      <video
-
-        id="introVideo"
-
-        src="${INTRO_VIDEO}"
-
-        preload="auto"
-
-        muted
-
-        playsinline
-
-        webkit-playsinline
-
-        crossorigin="anonymous"
-
-      ></video>
-
-
-
-
-      <!--
-      循環影片
-      -->
-
-      <video
-
-        id="loopVideo"
-
-        src="${LOOP_VIDEO}"
-
-        preload="auto"
-
-        muted
-
-        loop
-
-        playsinline
-
-        webkit-playsinline
-
-        crossorigin="anonymous"
-
-      ></video>
-
-
-    </a-assets>
-
-
-
-
-    <a-camera
-
-      position="0 0 0"
-
-      look-controls="
+      vr-mode-ui="
         enabled: false
       "
 
-    ></a-camera>
 
-
-
-
-
-    <a-entity
-
-      id="target"
-
-      mindar-image-target="
-        targetIndex: 0
+      device-orientation-permission-ui="
+        enabled: false
       "
+
 
     >
 
 
 
+      <a-assets>
 
 
-      <!--
+        <video
 
-      INTRO 影片
+          id="introVideo"
 
-      16:9
-      所以高 = 9 / 16
-      = 0.5625
+          src="${INTRO_VIDEO}"
 
-      -->
+          preload="auto"
+
+          playsinline
+
+          webkit-playsinline
+
+          crossorigin="anonymous"
+
+        ></video>
 
 
-      <a-plane
 
-        id="introPlane"
+        <video
 
-        position="
-          0
-          0
-          0.02
+          id="loopVideo"
+
+          src="${LOOP_VIDEO}"
+
+          preload="auto"
+
+          loop
+
+          playsinline
+
+          webkit-playsinline
+
+          crossorigin="anonymous"
+
+        ></video>
+
+
+      </a-assets>
+
+
+
+
+      <a-camera
+
+        position="0 0 0"
+
+        look-controls="
+          enabled: false
         "
 
-        width="
-          1
+      ></a-camera>
+
+
+
+
+      <a-entity
+
+        id="target"
+
+        mindar-image-target="
+          targetIndex: 0
         "
 
-        height="
-          0.5625
-        "
-
-        material="
-          src: #introVideo;
-          shader: flat;
-        "
-
-      ></a-plane>
+      >
 
 
 
+        <a-plane
+
+          id="introPlane"
+
+          position="
+            0 0 0.02
+          "
+
+          width="
+            1
+          "
+
+          height="
+            0.5625
+          "
+
+          material="
+            src: #introVideo;
+            shader: flat;
+          "
+
+        ></a-plane>
 
 
 
-      <!--
 
-      LOOP 影片
+        <a-plane
 
-      一開始隱藏
+          id="loopPlane"
 
-      -->
+          position="
+            0 0 0.021
+          "
 
+          width="
+            1
+          "
 
-      <a-plane
+          height="
+            0.5625
+          "
 
-        id="loopPlane"
+          visible="
+            false
+          "
 
-        position="
-          0
-          0
-          0.021
-        "
+          material="
+            src: #loopVideo;
+            shader: flat;
+          "
 
-        width="
-          1
-        "
-
-        height="
-          0.5625
-        "
-
-        visible="
-          false
-        "
-
-        material="
-          src: #loopVideo;
-          shader: flat;
-        "
-
-      ></a-plane>
+        ></a-plane>
 
 
 
-    </a-entity>
+      </a-entity>
 
 
-  </a-scene>
+
+    </a-scene>
+
 
   `;
 
 
 
   const target =
-
     document.getElementById(
       "target"
     );
 
 
-
   const introVideo =
-
     document.getElementById(
       "introVideo"
     );
 
 
-
   const loopVideo =
-
     document.getElementById(
       "loopVideo"
     );
 
 
-
   const introPlane =
-
     document.getElementById(
       "introPlane"
     );
 
 
-
   const loopPlane =
-
     document.getElementById(
       "loopPlane"
     );
+
+
+
+  introVideo.muted =
+    false;
+
+  introVideo.volume =
+    1;
+
+
+  loopVideo.muted =
+    false;
+
+  loopVideo.volume =
+    1;
 
 
 
@@ -980,9 +1390,72 @@ function mountAR(
     false;
 
 
-
   let targetVisible =
     false;
+
+
+
+  async function playVideo(
+    video
+  ) {
+
+    try {
+
+      await video.play();
+
+      soundUnlock.style.display =
+        "none";
+
+    }
+
+    catch (
+      error
+    ) {
+
+      console.log(
+        "需要使用者再次點擊才能播放聲音"
+      );
+
+
+      soundUnlock.style.display =
+        "block";
+
+
+      soundUnlock.onclick =
+        async () => {
+
+          try {
+
+            video.muted =
+              false;
+
+            video.volume =
+              1;
+
+
+            await video.play();
+
+
+            soundUnlock.style.display =
+              "none";
+
+          }
+
+          catch (
+            e
+          ) {
+
+            console.error(
+              e
+            );
+
+          }
+
+        };
+
+    }
+
+  }
 
 
 
@@ -998,99 +1471,57 @@ function mountAR(
         true;
 
 
-      hint.textContent =
-        "✓ 辨識成功";
+      hint.style.opacity =
+        ".45";
 
 
-      found
-        .classList
-        .add(
-          "show"
-        );
-
-
-      setTimeout(
-
-        () => {
-
-          found
-            .classList
-            .remove(
-              "show"
-            );
-
-        },
-
-        1400
-
+      showToast(
+        "找到了。"
       );
 
 
 
-
-      try {
-
-
-
-        if (
-          introFinished
-        ) {
+      if (
+        introFinished
+      ) {
 
 
-          introPlane
-            .setAttribute(
-              "visible",
-              false
-            );
+        introPlane.setAttribute(
+          "visible",
+          false
+        );
 
 
-          loopPlane
-            .setAttribute(
-              "visible",
-              true
-            );
+        loopPlane.setAttribute(
+          "visible",
+          true
+        );
 
 
-          await loopVideo
-            .play();
-
-        }
-
-
-        else {
-
-
-          introPlane
-            .setAttribute(
-              "visible",
-              true
-            );
-
-
-          loopPlane
-            .setAttribute(
-              "visible",
-              false
-            );
-
-
-          await introVideo
-            .play();
-
-        }
-
-
+        await playVideo(
+          loopVideo
+        );
 
       }
 
-      catch (error) {
 
-        console.error(
+      else {
 
-          "影片播放失敗：",
 
-          error
+        introPlane.setAttribute(
+          "visible",
+          true
+        );
 
+
+        loopPlane.setAttribute(
+          "visible",
+          false
+        );
+
+
+        await playVideo(
+          introVideo
         );
 
       }
@@ -1099,8 +1530,6 @@ function mountAR(
     }
 
   );
-
-
 
 
 
@@ -1116,8 +1545,8 @@ function mountAR(
         false;
 
 
-      hint.textContent =
-        "把鏡頭對準卡片";
+      hint.style.opacity =
+        "1";
 
 
       introVideo.pause();
@@ -1128,8 +1557,6 @@ function mountAR(
     }
 
   );
-
-
 
 
 
@@ -1145,89 +1572,32 @@ function mountAR(
         true;
 
 
-
-      introPlane
-        .setAttribute(
-          "visible",
-          false
-        );
+      introPlane.setAttribute(
+        "visible",
+        false
+      );
 
 
-
-      loopPlane
-        .setAttribute(
-          "visible",
-          true
-        );
-
+      loopPlane.setAttribute(
+        "visible",
+        true
+      );
 
 
       loopVideo.currentTime =
         0;
 
 
-
       if (
         targetVisible
       ) {
 
-        try {
-
-          await loopVideo
-            .play();
-
-        }
-
-        catch (error) {
-
-          console.error(
-
-            "Loop 播放失敗：",
-
-            error
-
-          );
-
-        }
+        await playVideo(
+          loopVideo
+        );
 
       }
 
-
-    }
-
-  );
-
-
-
-
-
-
-  introVideo.addEventListener(
-
-    "error",
-
-    () => {
-
-      console.error(
-        "intro.mp4 載入失敗"
-      );
-
-    }
-
-  );
-
-
-
-
-  loopVideo.addEventListener(
-
-    "error",
-
-    () => {
-
-      console.error(
-        "loop.mp4 載入失敗"
-      );
 
     }
 
@@ -1267,20 +1637,12 @@ startBtn.addEventListener(
     try {
 
 
-
       setStatus(
-        "正在要求相機權限…"
+        "正在打開…"
       );
-
 
 
       await requestCamera();
-
-
-
-      setStatus(
-        "✅ 相機權限正常\n正在準備卡片辨識…"
-      );
 
 
 
@@ -1290,24 +1652,31 @@ startBtn.addEventListener(
 
 
       setStatus(
-        "✅ 準備完成"
+        ""
       );
 
 
+      overlay.classList.add(
+        "fade-out"
+      );
 
-      overlay.style.display =
-        "none";
 
+      setTimeout(
+
+        () => {
+
+          overlay.style.display =
+            "none";
+
+        },
+
+        650
+
+      );
 
 
       hint.style.display =
         "block";
-
-
-
-      hint.textContent =
-        "把鏡頭對準卡片";
-
 
 
       mountAR(
@@ -1315,10 +1684,11 @@ startBtn.addEventListener(
       );
 
 
-
     }
 
-    catch (error) {
+    catch (
+      error
+    ) {
 
 
       console.error(
@@ -1332,7 +1702,7 @@ startBtn.addEventListener(
 
         ||
 
-        String(error);
+        "目前無法開啟";
 
 
 
@@ -1342,25 +1712,14 @@ startBtn.addEventListener(
       ) {
 
         message =
-
-          "相機權限被拒絕。\n\n" +
-
-          "請使用 Chrome / Safari 開啟，" +
-
-          "並允許網站使用相機。";
+          "需要允許相機權限才能打開這段回憶";
 
       }
 
 
-
       setStatus(
-
-        "❌ 啟動失敗\n\n" +
-
         message
-
       );
-
 
 
       startBtn.disabled =
