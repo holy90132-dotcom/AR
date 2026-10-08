@@ -1,60 +1,732 @@
 <!doctype html>
 <html lang="zh-Hant">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>相機權限測試</title>
-<style>
-body{font-family:system-ui,-apple-system,sans-serif;background:#111827;color:white;margin:0;padding:24px}
-.wrap{max-width:520px;margin:auto}
-button{width:100%;padding:16px;border:0;border-radius:14px;font-size:18px;font-weight:800}
-pre{white-space:pre-wrap;background:#0b1220;padding:14px;border-radius:12px;margin-top:16px}
-video{width:100%;margin-top:16px;border-radius:14px;background:black}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>AR Card MVP</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image.prod.js"></script>
+  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image-aframe.prod.js"></script>
+
+  <style>
+    *{box-sizing:border-box}
+    html,body{
+      margin:0;width:100%;height:100%;overflow:hidden;
+      background:#050914;
+      font-family:system-ui,-apple-system,"Segoe UI",sans-serif
+    }
+
+    #ar{position:fixed;inset:0}
+
+    #overlay{
+      position:fixed;inset:0;z-index:30;
+      display:grid;place-items:center;padding:20px;
+      background:rgba(3,7,15,.90)
+    }
+
+    .panel{
+      width:min(90vw,430px);
+      padding:24px 20px;
+      border-radius:22px;
+      background:rgba(12,19,33,.95);
+      color:#fff;
+      box-shadow:0 24px 80px rgba(0,0,0,.45)
+    }
+
+    h1{font-size:23px;margin:0 0 8px}
+
+    .sub{
+      font-size:14px;
+      line-height:1.6;
+      opacity:.78
+    }
+
+    button{
+      width:100%;
+      margin-top:16px;
+      padding:14px;
+      border:0;
+      border-radius:14px;
+      font-size:16px;
+      font-weight:800
+    }
+
+    #startBtn{background:#fff;color:#09101c}
+
+    #pickBtn{
+      background:#24334d;
+      color:#fff;
+      display:none
+    }
+
+    #fileInput{display:none}
+
+    #status{
+      margin-top:14px;
+      padding:12px;
+      border-radius:14px;
+      background:rgba(255,255,255,.05);
+      font-size:13px;
+      line-height:1.6;
+      white-space:pre-wrap;
+      min-height:64px
+    }
+
+    #hint{
+      position:fixed;
+      left:50%;top:20px;
+      transform:translateX(-50%);
+      z-index:20;
+      display:none;
+      padding:10px 16px;
+      border-radius:999px;
+      background:rgba(0,0,0,.62);
+      color:#fff;
+      font-size:14px;
+      white-space:nowrap
+    }
+
+    #found{
+      position:fixed;
+      left:50%;bottom:30px;
+      transform:translateX(-50%) translateY(20px);
+      z-index:22;
+      opacity:0;
+      transition:.25s ease;
+      padding:12px 18px;
+      border-radius:999px;
+      background:#fff;
+      color:#07111e;
+      font-weight:900
+    }
+
+    #found.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0)
+    }
+  </style>
 </head>
+
 <body>
-<div class="wrap">
-<h2>手機相機權限測試</h2>
-<p>按下面按鈕後，瀏覽器應該跳出「允許使用相機」。</p>
-<button id="btn">要求開啟相機</button>
-<pre id="log">等待操作…</pre>
-<video id="video" autoplay playsinline muted></video>
+
+<div id="ar"></div>
+
+<div id="overlay">
+  <div class="panel">
+    <h1>卡片 AR MVP</h1>
+
+    <div class="sub">
+      按下開始，允許相機後，把鏡頭對準悠遊卡。
+    </div>
+
+    <button id="startBtn">開始掃描</button>
+
+    <button id="pickBtn">選擇辨識原圖</button>
+
+    <input id="fileInput" type="file" accept="image/*">
+
+    <div id="status">等待開始…</div>
+  </div>
 </div>
+
+<div id="hint">把鏡頭對準悠遊卡</div>
+
+<div id="found">✓ 掃到了</div>
+
 <script>
-const btn = document.getElementById('btn');
-const log = document.getElementById('log');
-const video = document.getElementById('video');
 
-function show(msg){ log.textContent = msg; }
+const REMOTE_TARGET =
+"https://lh3.googleusercontent.com/u/0/d/1algYZ5jDDPfznbV508vWNSEsr67IGEv2";
 
-btn.onclick = async () => {
-  show(
-    'secureContext = ' + window.isSecureContext + '\n' +
-    'protocol = ' + location.protocol + '\n' +
-    'mediaDevices = ' + !!navigator.mediaDevices
+const overlay = document.getElementById("overlay");
+const startBtn = document.getElementById("startBtn");
+const pickBtn = document.getElementById("pickBtn");
+const fileInput = document.getElementById("fileInput");
+
+const statusEl = document.getElementById("status");
+const hint = document.getElementById("hint");
+const found = document.getElementById("found");
+
+const ar = document.getElementById("ar");
+
+let selectedTargetFile = null;
+let starting = false;
+
+function say(msg){
+  statusEl.textContent = msg;
+}
+
+async function requestCamera(){
+
+  if(!window.isSecureContext){
+    throw new Error("這個頁面不是 HTTPS");
+  }
+
+  if(!navigator.mediaDevices?.getUserMedia){
+    throw new Error("瀏覽器沒有相機 API");
+  }
+
+  const tries = [
+
+    {
+      video:{
+        facingMode:{exact:"environment"}
+      },
+      audio:false
+    },
+
+    {
+      video:{
+        facingMode:{ideal:"environment"}
+      },
+      audio:false
+    },
+
+    {
+      video:true,
+      audio:false
+    }
+
+  ];
+
+  let lastError;
+
+  for(const constraints of tries){
+
+    try{
+
+      const stream =
+        await navigator.mediaDevices.getUserMedia(constraints);
+
+      stream.getTracks().forEach(t=>t.stop());
+
+      return;
+
+    }
+    catch(e){
+
+      lastError=e;
+
+    }
+
+  }
+
+  throw lastError;
+
+}
+
+
+async function fetchRemoteTarget(){
+
+  const response =
+    await fetch(
+      REMOTE_TARGET,
+      {
+        mode:"cors",
+        cache:"no-store"
+      }
+    );
+
+  if(!response.ok){
+
+    throw new Error(
+      "圖片 HTTP " + response.status
+    );
+
+  }
+
+  const blob =
+    await response.blob();
+
+  if(!blob.type.startsWith("image/")){
+
+    throw new Error(
+      "Google 沒有回傳圖片"
+    );
+
+  }
+
+  return blob;
+
+}
+
+
+function blobToImage(blob){
+
+  return new Promise(
+    (resolve,reject)=>{
+
+      const url =
+        URL.createObjectURL(blob);
+
+      const img =
+        new Image();
+
+      img.onload=()=>{
+
+        URL.revokeObjectURL(url);
+
+        resolve(img);
+
+      };
+
+      img.onerror=()=>{
+
+        URL.revokeObjectURL(url);
+
+        reject(
+          new Error("辨識圖讀取失敗")
+        );
+
+      };
+
+      img.src=url;
+
+    }
   );
 
-  if (!window.isSecureContext) {
-    show('❌ 目前不是安全環境。\n網址必須是 https:// 開頭（或 localhost）。\n目前：' + location.href);
-    return;
+}
+
+
+async function getTargetBlob(){
+
+  if(selectedTargetFile){
+
+    return selectedTargetFile;
+
   }
 
-  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
-    show('❌ 這個瀏覽器 / 目前頁面環境不允許使用相機 API。');
-    return;
+  say(
+    "✅ 相機正常\n正在讀取悠遊卡原圖…"
+  );
+
+  try{
+
+    return await fetchRemoteTarget();
+
+  }
+  catch(e){
+
+    console.warn(e);
+
+    pickBtn.style.display="block";
+
+    throw new Error(
+      "Google 圖片被瀏覽器擋住。\n" +
+      "按「選擇辨識原圖」，選悠遊卡原始圖片。"
+    );
+
   }
 
-  try {
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: { ideal: 'environment' } },
-      audio: false
-    });
-    video.srcObject = stream;
-    show('✅ 相機已成功開啟。\n如果你看到畫面，代表權限沒問題。');
-  } catch (e) {
-    show('❌ 開相機失敗\n' + e.name + ': ' + e.message);
+}
+
+
+async function compileTarget(blob){
+
+  const Compiler =
+    window.MINDAR?.IMAGE?.Compiler
+    ||
+    window.MINDAR?.Compiler;
+
+  if(!Compiler){
+
+    throw new Error(
+      "MindAR 載入失敗"
+    );
+
   }
-};
+
+  const img =
+    await blobToImage(blob);
+
+  const compiler =
+    new Compiler();
+
+  say(
+    "✅ 原圖已載入\n正在建立辨識資料…"
+  );
+
+  await compiler.compileImageTargets(
+    [img],
+    progress=>{
+
+      const p =
+        Math.round(
+          Number(progress) || 0
+        );
+
+      say(
+        "✅ 原圖已載入\n"+
+        "正在建立辨識資料… "+
+        p+
+        "%"
+      );
+
+    }
+  );
+
+  const buffer =
+    await compiler.exportData();
+
+  const blobMind =
+    new Blob(
+      [buffer],
+      {
+        type:"application/octet-stream"
+      }
+    );
+
+  return URL.createObjectURL(blobMind);
+
+}
+
+
+function mountAR(mindUrl){
+
+  ar.innerHTML = `
+
+  <a-scene
+
+    embedded
+
+    mindar-image="
+      imageTargetSrc:${mindUrl};
+      maxTrack:1;
+      filterMinCF:0.001;
+      filterBeta:0.01;
+      uiScanning:no;
+      uiLoading:no;
+      uiError:no;
+    "
+
+    renderer="
+      colorManagement:true;
+      physicallyCorrectLights:true;
+      alpha:true
+    "
+
+    vr-mode-ui="enabled:false"
+
+    device-orientation-permission-ui="enabled:false"
+
+  >
+
+    <a-camera
+      position="0 0 0"
+      look-controls="enabled:false">
+    </a-camera>
+
+
+    <a-entity
+      id="target"
+      mindar-image-target="targetIndex:0"
+    >
+
+
+      <a-plane
+
+        position="0 0 0.025"
+
+        width="1.02"
+
+        height="0.64"
+
+        material="
+          color:#39c8ff;
+          opacity:.11;
+          transparent:true;
+          shader:flat
+        "
+
+        animation="
+          property:material.opacity;
+          from:.05;
+          to:.22;
+          dur:650;
+          dir:alternate;
+          loop:true
+        "
+
+      ></a-plane>
+
+
+      <a-torus
+
+        position="0 0 .16"
+
+        radius=".34"
+
+        radius-tubular=".012"
+
+        rotation="68 0 0"
+
+        material="
+          color:#54e0ff;
+          emissive:#54e0ff;
+          emissiveIntensity:1
+        "
+
+        animation="
+          property:rotation;
+          to:68 360 0;
+          dur:2100;
+          easing:linear;
+          loop:true
+        "
+
+      ></a-torus>
+
+
+      <a-torus
+
+        position="0 0 .21"
+
+        radius=".23"
+
+        radius-tubular=".008"
+
+        rotation="105 0 0"
+
+        material="
+          color:#ffffff;
+          emissive:#8eeeff;
+          emissiveIntensity:1
+        "
+
+        animation="
+          property:rotation;
+          to:105 -360 0;
+          dur:1500;
+          easing:linear;
+          loop:true
+        "
+
+      ></a-torus>
+
+
+      <a-sphere
+
+        position="0 0 .30"
+
+        radius=".095"
+
+        material="
+          color:#3edcff;
+          emissive:#3edcff;
+          emissiveIntensity:1;
+          opacity:.9;
+          transparent:true
+        "
+
+        animation="
+          property:position;
+          from:0 -.05 .24;
+          to:0 .08 .38;
+          dur:800;
+          dir:alternate;
+          loop:true
+        "
+
+      ></a-sphere>
+
+
+      <a-plane
+
+        position="0 -.24 .31"
+
+        width=".82"
+
+        height=".20"
+
+        material="
+          color:#06111f;
+          opacity:.88;
+          transparent:true
+        "
+
+      ></a-plane>
+
+
+      <a-text
+
+        value="STORY UNLOCKED"
+
+        align="center"
+
+        color="#ffffff"
+
+        width="1.45"
+
+        position="0 -.215 .325"
+
+      ></a-text>
+
+
+      <a-text
+
+        value="FOUND IT!"
+
+        align="center"
+
+        color="#56ddff"
+
+        width=".92"
+
+        position="0 -.285 .325"
+
+      ></a-text>
+
+
+    </a-entity>
+
+
+  </a-scene>
+
+  `;
+
+
+  const target =
+    document.getElementById("target");
+
+
+  target.addEventListener(
+    "targetFound",
+    ()=>{
+
+      hint.textContent =
+        "✓ 辨識成功";
+
+      found.classList.add(
+        "show"
+      );
+
+      setTimeout(
+        ()=>found.classList.remove(
+          "show"
+        ),
+        1600
+      );
+
+    }
+  );
+
+
+  target.addEventListener(
+    "targetLost",
+    ()=>{
+
+      hint.textContent =
+        "把鏡頭對準悠遊卡";
+
+    }
+  );
+
+}
+
+
+async function start(){
+
+  if(starting)return;
+
+  starting=true;
+
+  startBtn.disabled=true;
+
+  pickBtn.style.display="none";
+
+  try{
+
+    say(
+      "正在要求相機權限…"
+    );
+
+    await requestCamera();
+
+
+    const targetBlob =
+      await getTargetBlob();
+
+
+    const mindUrl =
+      await compileTarget(
+        targetBlob
+      );
+
+
+    overlay.style.display =
+      "none";
+
+
+    hint.style.display =
+      "block";
+
+
+    mountAR(mindUrl);
+
+  }
+  catch(e){
+
+    console.error(e);
+
+    say(
+      "❌ "+
+      (e?.message || e)
+    );
+
+    startBtn.disabled=false;
+
+    starting=false;
+
+  }
+
+}
+
+
+startBtn.addEventListener(
+  "click",
+  start
+);
+
+
+pickBtn.addEventListener(
+  "click",
+  ()=>{
+
+    fileInput.click();
+
+  }
+);
+
+
+fileInput.addEventListener(
+  "change",
+  ()=>{
+
+    if(
+      !fileInput.files?.[0]
+    ) return;
+
+    selectedTargetFile =
+      fileInput.files[0];
+
+    pickBtn.style.display =
+      "none";
+
+    starting=false;
+
+    startBtn.disabled=false;
+
+    say(
+      "✅ 已選擇辨識原圖\n"+
+      "再按一次「開始掃描」。"
+    );
+
+  }
+);
+
 </script>
+
 </body>
 </html>
