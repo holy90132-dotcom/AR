@@ -1,288 +1,597 @@
 <!doctype html>
 <html lang="zh-Hant">
+
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <title>AR Card MVP</title>
 
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image.prod.js"></script>
-  <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image-aframe.prod.js"></script>
+<meta charset="utf-8">
 
-  <style>
-    *{box-sizing:border-box}
-    html,body{
-      margin:0;width:100%;height:100%;overflow:hidden;
-      background:#050914;
-      font-family:system-ui,-apple-system,"Segoe UI",sans-serif
-    }
+<meta
+  name="viewport"
+  content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no"
+>
 
-    #ar{position:fixed;inset:0}
+<meta
+  name="apple-mobile-web-app-capable"
+  content="yes"
+>
 
-    #overlay{
-      position:fixed;inset:0;z-index:30;
-      display:grid;place-items:center;padding:20px;
-      background:rgba(3,7,15,.90)
-    }
+<title>AR Story</title>
 
-    .panel{
-      width:min(90vw,430px);
-      padding:24px 20px;
-      border-radius:22px;
-      background:rgba(12,19,33,.95);
-      color:#fff;
-      box-shadow:0 24px 80px rgba(0,0,0,.45)
-    }
 
-    h1{font-size:23px;margin:0 0 8px}
+<!-- MindAR -->
 
-    .sub{
-      font-size:14px;
-      line-height:1.6;
-      opacity:.78
-    }
+<script
+  src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image.prod.js">
+</script>
 
-    button{
-      width:100%;
-      margin-top:16px;
-      padding:14px;
-      border:0;
-      border-radius:14px;
-      font-size:16px;
-      font-weight:800
-    }
 
-    #startBtn{background:#fff;color:#09101c}
+<!-- A-Frame -->
 
-    #pickBtn{
-      background:#24334d;
-      color:#fff;
-      display:none
-    }
+<script
+  src="https://aframe.io/releases/1.2.0/aframe.min.js">
+</script>
 
-    #fileInput{display:none}
 
-    #status{
-      margin-top:14px;
-      padding:12px;
-      border-radius:14px;
-      background:rgba(255,255,255,.05);
-      font-size:13px;
-      line-height:1.6;
-      white-space:pre-wrap;
-      min-height:64px
-    }
+<!-- MindAR + A-Frame -->
 
-    #hint{
-      position:fixed;
-      left:50%;top:20px;
-      transform:translateX(-50%);
-      z-index:20;
-      display:none;
-      padding:10px 16px;
-      border-radius:999px;
-      background:rgba(0,0,0,.62);
-      color:#fff;
-      font-size:14px;
-      white-space:nowrap
-    }
+<script
+  src="https://cdn.jsdelivr.net/npm/mind-ar@1.1.5/dist/mindar-image-aframe.prod.js">
+</script>
 
-    #found{
-      position:fixed;
-      left:50%;bottom:30px;
-      transform:translateX(-50%) translateY(20px);
-      z-index:22;
-      opacity:0;
-      transition:.25s ease;
-      padding:12px 18px;
-      border-radius:999px;
-      background:#fff;
-      color:#07111e;
-      font-weight:900
-    }
 
-    #found.show{
-      opacity:1;
-      transform:translateX(-50%) translateY(0)
-    }
-  </style>
+
+<style>
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+
+  margin: 0;
+
+  width: 100%;
+  height: 100%;
+
+  overflow: hidden;
+
+  background: #050914;
+
+  font-family:
+    system-ui,
+    -apple-system,
+    "Segoe UI",
+    sans-serif;
+
+}
+
+
+
+#ar {
+
+  position: fixed;
+
+  inset: 0;
+
+}
+
+
+
+#overlay {
+
+  position: fixed;
+
+  inset: 0;
+
+  z-index: 30;
+
+  display: grid;
+
+  place-items: center;
+
+  padding: 20px;
+
+  background:
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(40, 130, 255, 0.25),
+      transparent 45%
+    ),
+    rgba(3, 7, 15, 0.92);
+
+}
+
+
+
+.panel {
+
+  width: min(90vw, 430px);
+
+  padding: 24px 20px;
+
+  border-radius: 22px;
+
+  background:
+    rgba(12, 19, 33, 0.96);
+
+  color: white;
+
+  box-shadow:
+    0 24px 80px
+    rgba(0, 0, 0, 0.5);
+
+}
+
+
+
+h1 {
+
+  margin: 0 0 10px;
+
+  font-size: 24px;
+
+}
+
+
+
+.description {
+
+  font-size: 14px;
+
+  line-height: 1.7;
+
+  opacity: 0.8;
+
+}
+
+
+
+#startBtn {
+
+  width: 100%;
+
+  margin-top: 18px;
+
+  padding: 15px;
+
+  border: 0;
+
+  border-radius: 14px;
+
+  background: white;
+
+  color: #09101c;
+
+  font-size: 17px;
+
+  font-weight: 800;
+
+  cursor: pointer;
+
+}
+
+
+
+#startBtn:disabled {
+
+  opacity: 0.5;
+
+}
+
+
+
+#status {
+
+  margin-top: 15px;
+
+  padding: 12px;
+
+  min-height: 65px;
+
+  border-radius: 14px;
+
+  background:
+    rgba(255, 255, 255, 0.05);
+
+  font-size: 13px;
+
+  line-height: 1.6;
+
+  white-space: pre-wrap;
+
+}
+
+
+
+#hint {
+
+  position: fixed;
+
+  left: 50%;
+
+  top: 20px;
+
+  transform:
+    translateX(-50%);
+
+  z-index: 20;
+
+  display: none;
+
+  padding:
+    10px 16px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(0, 0, 0, 0.62);
+
+  color: white;
+
+  font-size: 14px;
+
+  white-space: nowrap;
+
+  backdrop-filter:
+    blur(10px);
+
+}
+
+
+
+#found {
+
+  position: fixed;
+
+  left: 50%;
+
+  bottom: 28px;
+
+  transform:
+    translateX(-50%)
+    translateY(20px);
+
+  z-index: 22;
+
+  opacity: 0;
+
+  padding:
+    12px 18px;
+
+  border-radius:
+    999px;
+
+  background:
+    rgba(255, 255, 255, 0.96);
+
+  color:
+    #07111e;
+
+  font-weight: 900;
+
+  transition:
+    0.25s ease;
+
+}
+
+
+
+#found.show {
+
+  opacity: 1;
+
+  transform:
+    translateX(-50%)
+    translateY(0);
+
+}
+
+</style>
+
 </head>
+
+
 
 <body>
 
+
 <div id="ar"></div>
 
-<div id="overlay">
-  <div class="panel">
-    <h1>卡片 AR MVP</h1>
 
-    <div class="sub">
-      按下開始，允許相機後，把鏡頭對準悠遊卡。
+
+<div id="overlay">
+
+  <div class="panel">
+
+    <h1>
+      開啟故事
+    </h1>
+
+    <div class="description">
+
+      請使用 Chrome 或 Safari 開啟。<br>
+
+      按下開始後允許使用相機，<br>
+
+      再把鏡頭對準卡片。
+
     </div>
 
-    <button id="startBtn">開始掃描</button>
 
-    <button id="pickBtn">選擇辨識原圖</button>
+    <button id="startBtn">
 
-    <input id="fileInput" type="file" accept="image/*">
+      開始掃描
 
-    <div id="status">等待開始…</div>
+    </button>
+
+
+    <div id="status">
+
+      等待開始…
+
+    </div>
+
   </div>
+
 </div>
 
-<div id="hint">把鏡頭對準悠遊卡</div>
 
-<div id="found">✓ 掃到了</div>
+
+<div id="hint">
+
+  把鏡頭對準卡片
+
+</div>
+
+
+
+<div id="found">
+
+  ✓ 辨識成功
+
+</div>
+
+
+
 
 <script>
 
-const REMOTE_TARGET =
-"./target.png";
+const TARGET_IMAGE =
+  "./target.jpg";
 
-const overlay = document.getElementById("overlay");
-const startBtn = document.getElementById("startBtn");
-const pickBtn = document.getElementById("pickBtn");
-const fileInput = document.getElementById("fileInput");
 
-const statusEl = document.getElementById("status");
-const hint = document.getElementById("hint");
-const found = document.getElementById("found");
+const INTRO_VIDEO =
+  "./intro.mp4";
 
-const ar = document.getElementById("ar");
 
-let selectedTargetFile = null;
-let starting = false;
+const LOOP_VIDEO =
+  "./loop.mp4";
 
-function say(msg){
-  statusEl.textContent = msg;
+
+
+const ar =
+  document.getElementById(
+    "ar"
+  );
+
+
+const overlay =
+  document.getElementById(
+    "overlay"
+  );
+
+
+const startBtn =
+  document.getElementById(
+    "startBtn"
+  );
+
+
+const statusEl =
+  document.getElementById(
+    "status"
+  );
+
+
+const hint =
+  document.getElementById(
+    "hint"
+  );
+
+
+const found =
+  document.getElementById(
+    "found"
+  );
+
+
+
+let starting =
+  false;
+
+
+
+function setStatus(message) {
+
+  statusEl.textContent =
+    message;
+
 }
 
-async function requestCamera(){
 
-  if(!window.isSecureContext){
-    throw new Error("這個頁面不是 HTTPS");
+
+async function requestCamera() {
+
+  if (
+    !window.isSecureContext
+  ) {
+
+    throw new Error(
+      "目前不是 HTTPS 網頁，無法使用相機。"
+    );
+
   }
 
-  if(!navigator.mediaDevices?.getUserMedia){
-    throw new Error("瀏覽器沒有相機 API");
+
+  if (
+    !navigator.mediaDevices ||
+    !navigator.mediaDevices.getUserMedia
+  ) {
+
+    throw new Error(
+      "這個瀏覽器無法使用相機。請改用 Chrome 或 Safari。"
+    );
+
   }
 
-  const tries = [
+
+
+  const constraintsList = [
 
     {
-      video:{
-        facingMode:{exact:"environment"}
+
+      video: {
+
+        facingMode: {
+
+          exact:
+            "environment"
+
+        }
+
       },
-      audio:false
+
+      audio: false
+
     },
 
-    {
-      video:{
-        facingMode:{ideal:"environment"}
-      },
-      audio:false
-    },
 
     {
-      video:true,
-      audio:false
+
+      video: {
+
+        facingMode: {
+
+          ideal:
+            "environment"
+
+        }
+
+      },
+
+      audio: false
+
+    },
+
+
+    {
+
+      video: true,
+
+      audio: false
+
     }
 
   ];
 
-  let lastError;
 
-  for(const constraints of tries){
 
-    try{
+  let lastError =
+    null;
+
+
+
+  for (
+    const constraints
+    of constraintsList
+  ) {
+
+    try {
 
       const stream =
-        await navigator.mediaDevices.getUserMedia(constraints);
+        await navigator.mediaDevices
+          .getUserMedia(
+            constraints
+          );
 
-      stream.getTracks().forEach(t=>t.stop());
+
+      stream
+        .getTracks()
+        .forEach(
+
+          track =>
+            track.stop()
+
+        );
+
 
       return;
 
     }
-    catch(e){
 
-      lastError=e;
+    catch (error) {
+
+      lastError =
+        error;
 
     }
 
   }
 
-  throw lastError;
+
+
+  throw (
+    lastError ||
+    new Error(
+      "無法開啟相機"
+    )
+  );
 
 }
 
 
-async function fetchRemoteTarget(){
-
-  const response =
-    await fetch(
-      REMOTE_TARGET,
-      {
-        mode:"cors",
-        cache:"no-store"
-      }
-    );
-
-  if(!response.ok){
-
-    throw new Error(
-      "圖片 HTTP " + response.status
-    );
-
-  }
-
-  const blob =
-    await response.blob();
-
-  if(!blob.type.startsWith("image/")){
-
-    throw new Error(
-      "Google 沒有回傳圖片"
-    );
-
-  }
-
-  return blob;
-
-}
 
 
-function blobToImage(blob){
+function loadImage(url) {
 
   return new Promise(
-    (resolve,reject)=>{
+    (
+      resolve,
+      reject
+    ) => {
 
-      const url =
-        URL.createObjectURL(blob);
-
-      const img =
+      const image =
         new Image();
 
-      img.onload=()=>{
 
-        URL.revokeObjectURL(url);
+      image.onload =
+        () => {
 
-        resolve(img);
+          resolve(
+            image
+          );
 
-      };
+        };
 
-      img.onerror=()=>{
 
-        URL.revokeObjectURL(url);
+      image.onerror =
+        () => {
 
-        reject(
-          new Error("辨識圖讀取失敗")
-        );
+          reject(
 
-      };
+            new Error(
+              "找不到 target.jpg"
+            )
 
-      img.src=url;
+          );
+
+        };
+
+
+      image.src =
+        url;
 
     }
   );
@@ -290,293 +599,332 @@ function blobToImage(blob){
 }
 
 
-async function getTargetBlob(){
-
-  if(selectedTargetFile){
-
-    return selectedTargetFile;
-
-  }
-
-  say(
-    "✅ 相機正常\n正在讀取悠遊卡原圖…"
-  );
-
-  try{
-
-    return await fetchRemoteTarget();
-
-  }
-  catch(e){
-
-    console.warn(e);
-
-    pickBtn.style.display="block";
-
-    throw new Error(
-      "Google 圖片被瀏覽器擋住。\n" +
-      "按「選擇辨識原圖」，選悠遊卡原始圖片。"
-    );
-
-  }
-
-}
 
 
-async function compileTarget(blob){
+async function compileTarget() {
 
-  const Compiler =
+  const CompilerClass =
+
     window.MINDAR?.IMAGE?.Compiler
+
     ||
+
     window.MINDAR?.Compiler;
 
-  if(!Compiler){
+
+
+  if (
+    !CompilerClass
+  ) {
 
     throw new Error(
-      "MindAR 載入失敗"
+      "MindAR 沒有載入成功。"
     );
 
   }
 
-  const img =
-    await blobToImage(blob);
 
-  const compiler =
-    new Compiler();
 
-  say(
-    "✅ 原圖已載入\n正在建立辨識資料…"
+  setStatus(
+    "正在讀取卡片圖片…"
   );
 
-  await compiler.compileImageTargets(
-    [img],
-    progress=>{
 
-      const p =
-        Math.round(
-          Number(progress) || 0
-        );
-
-      say(
-        "✅ 原圖已載入\n"+
-        "正在建立辨識資料… "+
-        p+
-        "%"
-      );
-
-    }
-  );
-
-  const buffer =
-    await compiler.exportData();
-
-  const blobMind =
-    new Blob(
-      [buffer],
-      {
-        type:"application/octet-stream"
-      }
+  const image =
+    await loadImage(
+      TARGET_IMAGE
     );
 
-  return URL.createObjectURL(blobMind);
+
+
+  const compiler =
+    new CompilerClass();
+
+
+
+  setStatus(
+    "正在建立卡片辨識資料…"
+  );
+
+
+
+  await compiler
+    .compileImageTargets(
+
+      [image],
+
+      progress => {
+
+        const p =
+
+          Math.max(
+            0,
+            Math.min(
+              100,
+              Number(progress) || 0
+            )
+          );
+
+
+        setStatus(
+
+          "正在建立卡片辨識資料…\n" +
+
+          p.toFixed(0) +
+
+          "%"
+
+        );
+
+      }
+
+    );
+
+
+
+  const buffer =
+    await compiler
+      .exportData();
+
+
+
+  const blob =
+    new Blob(
+
+      [buffer],
+
+      {
+
+        type:
+          "application/octet-stream"
+
+      }
+
+    );
+
+
+
+  return URL
+    .createObjectURL(
+      blob
+    );
 
 }
 
 
-function mountAR(mindUrl){
+
+
+function mountAR(
+  mindUrl
+) {
+
+
 
   ar.innerHTML = `
+
 
   <a-scene
 
     embedded
 
+
     mindar-image="
-      imageTargetSrc:${mindUrl};
-      maxTrack:1;
-      filterMinCF:0.001;
-      filterBeta:0.01;
-      uiScanning:no;
-      uiLoading:no;
-      uiError:no;
+      imageTargetSrc: ${mindUrl};
+      maxTrack: 1;
+      filterMinCF: 0.001;
+      filterBeta: 0.01;
+      uiScanning: no;
+      uiLoading: no;
+      uiError: no;
     "
+
 
     renderer="
-      colorManagement:true;
-      physicallyCorrectLights:true;
-      alpha:true
+      colorManagement: true;
+      physicallyCorrectLights: true;
+      alpha: true;
     "
 
-    vr-mode-ui="enabled:false"
 
-    device-orientation-permission-ui="enabled:false"
+    vr-mode-ui="
+      enabled: false
+    "
+
+
+    device-orientation-permission-ui="
+      enabled: false
+    "
 
   >
 
+
+
+    <a-assets>
+
+
+      <!--
+      開場影片
+      不循環
+      -->
+
+      <video
+
+        id="introVideo"
+
+        src="${INTRO_VIDEO}"
+
+        preload="auto"
+
+        muted
+
+        playsinline
+
+        webkit-playsinline
+
+        crossorigin="anonymous"
+
+      ></video>
+
+
+
+
+      <!--
+      循環影片
+      -->
+
+      <video
+
+        id="loopVideo"
+
+        src="${LOOP_VIDEO}"
+
+        preload="auto"
+
+        muted
+
+        loop
+
+        playsinline
+
+        webkit-playsinline
+
+        crossorigin="anonymous"
+
+      ></video>
+
+
+    </a-assets>
+
+
+
+
     <a-camera
+
       position="0 0 0"
-      look-controls="enabled:false">
-    </a-camera>
+
+      look-controls="
+        enabled: false
+      "
+
+    ></a-camera>
+
+
+
 
 
     <a-entity
+
       id="target"
-      mindar-image-target="targetIndex:0"
+
+      mindar-image-target="
+        targetIndex: 0
+      "
+
     >
 
 
+
+
+
+      <!--
+
+      INTRO 影片
+
+      16:9
+      所以高 = 9 / 16
+      = 0.5625
+
+      -->
+
+
       <a-plane
 
-        position="0 0 0.025"
+        id="introPlane"
 
-        width="1.02"
-
-        height="0.64"
-
-        material="
-          color:#39c8ff;
-          opacity:.11;
-          transparent:true;
-          shader:flat
+        position="
+          0
+          0
+          0.02
         "
 
-        animation="
-          property:material.opacity;
-          from:.05;
-          to:.22;
-          dur:650;
-          dir:alternate;
-          loop:true
+        width="
+          1
+        "
+
+        height="
+          0.5625
+        "
+
+        material="
+          src: #introVideo;
+          shader: flat;
         "
 
       ></a-plane>
 
 
-      <a-torus
-
-        position="0 0 .16"
-
-        radius=".34"
-
-        radius-tubular=".012"
-
-        rotation="68 0 0"
-
-        material="
-          color:#54e0ff;
-          emissive:#54e0ff;
-          emissiveIntensity:1
-        "
-
-        animation="
-          property:rotation;
-          to:68 360 0;
-          dur:2100;
-          easing:linear;
-          loop:true
-        "
-
-      ></a-torus>
 
 
-      <a-torus
-
-        position="0 0 .21"
-
-        radius=".23"
-
-        radius-tubular=".008"
-
-        rotation="105 0 0"
-
-        material="
-          color:#ffffff;
-          emissive:#8eeeff;
-          emissiveIntensity:1
-        "
-
-        animation="
-          property:rotation;
-          to:105 -360 0;
-          dur:1500;
-          easing:linear;
-          loop:true
-        "
-
-      ></a-torus>
 
 
-      <a-sphere
+      <!--
 
-        position="0 0 .30"
+      LOOP 影片
 
-        radius=".095"
+      一開始隱藏
 
-        material="
-          color:#3edcff;
-          emissive:#3edcff;
-          emissiveIntensity:1;
-          opacity:.9;
-          transparent:true
-        "
-
-        animation="
-          property:position;
-          from:0 -.05 .24;
-          to:0 .08 .38;
-          dur:800;
-          dir:alternate;
-          loop:true
-        "
-
-      ></a-sphere>
+      -->
 
 
       <a-plane
 
-        position="0 -.24 .31"
+        id="loopPlane"
 
-        width=".82"
+        position="
+          0
+          0
+          0.021
+        "
 
-        height=".20"
+        width="
+          1
+        "
+
+        height="
+          0.5625
+        "
+
+        visible="
+          false
+        "
 
         material="
-          color:#06111f;
-          opacity:.88;
-          transparent:true
+          src: #loopVideo;
+          shader: flat;
         "
 
       ></a-plane>
 
-
-      <a-text
-
-        value="STORY UNLOCKED"
-
-        align="center"
-
-        color="#ffffff"
-
-        width="1.45"
-
-        position="0 -.215 .325"
-
-      ></a-text>
-
-
-      <a-text
-
-        value="FOUND IT!"
-
-        align="center"
-
-        color="#56ddff"
-
-        width=".92"
-
-        position="0 -.285 .325"
-
-      ></a-text>
 
 
     </a-entity>
@@ -587,146 +935,452 @@ function mountAR(mindUrl){
   `;
 
 
+
   const target =
-    document.getElementById("target");
+
+    document.getElementById(
+      "target"
+    );
+
+
+
+  const introVideo =
+
+    document.getElementById(
+      "introVideo"
+    );
+
+
+
+  const loopVideo =
+
+    document.getElementById(
+      "loopVideo"
+    );
+
+
+
+  const introPlane =
+
+    document.getElementById(
+      "introPlane"
+    );
+
+
+
+  const loopPlane =
+
+    document.getElementById(
+      "loopPlane"
+    );
+
+
+
+  let introFinished =
+    false;
+
+
+
+  let targetVisible =
+    false;
+
+
 
 
   target.addEventListener(
+
     "targetFound",
-    ()=>{
+
+    async () => {
+
+
+      targetVisible =
+        true;
+
 
       hint.textContent =
         "✓ 辨識成功";
 
-      found.classList.add(
-        "show"
-      );
+
+      found
+        .classList
+        .add(
+          "show"
+        );
+
 
       setTimeout(
-        ()=>found.classList.remove(
-          "show"
-        ),
-        1600
+
+        () => {
+
+          found
+            .classList
+            .remove(
+              "show"
+            );
+
+        },
+
+        1400
+
       );
 
+
+
+
+      try {
+
+
+
+        if (
+          introFinished
+        ) {
+
+
+          introPlane
+            .setAttribute(
+              "visible",
+              false
+            );
+
+
+          loopPlane
+            .setAttribute(
+              "visible",
+              true
+            );
+
+
+          await loopVideo
+            .play();
+
+        }
+
+
+        else {
+
+
+          introPlane
+            .setAttribute(
+              "visible",
+              true
+            );
+
+
+          loopPlane
+            .setAttribute(
+              "visible",
+              false
+            );
+
+
+          await introVideo
+            .play();
+
+        }
+
+
+
+      }
+
+      catch (error) {
+
+        console.error(
+
+          "影片播放失敗：",
+
+          error
+
+        );
+
+      }
+
+
     }
+
   );
+
+
+
+
 
 
   target.addEventListener(
+
     "targetLost",
-    ()=>{
+
+    () => {
+
+
+      targetVisible =
+        false;
+
 
       hint.textContent =
-        "把鏡頭對準悠遊卡";
+        "把鏡頭對準卡片";
+
+
+      introVideo.pause();
+
+      loopVideo.pause();
+
 
     }
+
   );
 
-}
 
 
-async function start(){
-
-  if(starting)return;
-
-  starting=true;
-
-  startBtn.disabled=true;
-
-  pickBtn.style.display="none";
-
-  try{
-
-    say(
-      "正在要求相機權限…"
-    );
-
-    await requestCamera();
 
 
-    const targetBlob =
-      await getTargetBlob();
+
+  introVideo.addEventListener(
+
+    "ended",
+
+    async () => {
 
 
-    const mindUrl =
-      await compileTarget(
-        targetBlob
+      introFinished =
+        true;
+
+
+
+      introPlane
+        .setAttribute(
+          "visible",
+          false
+        );
+
+
+
+      loopPlane
+        .setAttribute(
+          "visible",
+          true
+        );
+
+
+
+      loopVideo.currentTime =
+        0;
+
+
+
+      if (
+        targetVisible
+      ) {
+
+        try {
+
+          await loopVideo
+            .play();
+
+        }
+
+        catch (error) {
+
+          console.error(
+
+            "Loop 播放失敗：",
+
+            error
+
+          );
+
+        }
+
+      }
+
+
+    }
+
+  );
+
+
+
+
+
+
+  introVideo.addEventListener(
+
+    "error",
+
+    () => {
+
+      console.error(
+        "intro.mp4 載入失敗"
       );
 
+    }
 
-    overlay.style.display =
-      "none";
-
-
-    hint.style.display =
-      "block";
+  );
 
 
-    mountAR(mindUrl);
 
-  }
-  catch(e){
 
-    console.error(e);
+  loopVideo.addEventListener(
 
-    say(
-      "❌ "+
-      (e?.message || e)
-    );
+    "error",
 
-    startBtn.disabled=false;
+    () => {
 
-    starting=false;
+      console.error(
+        "loop.mp4 載入失敗"
+      );
 
-  }
+    }
+
+  );
+
 
 }
+
+
 
 
 startBtn.addEventListener(
+
   "click",
-  start
-);
+
+  async () => {
 
 
-pickBtn.addEventListener(
-  "click",
-  ()=>{
+    if (
+      starting
+    ) {
 
-    fileInput.click();
+      return;
+
+    }
+
+
+    starting =
+      true;
+
+
+    startBtn.disabled =
+      true;
+
+
+
+    try {
+
+
+
+      setStatus(
+        "正在要求相機權限…"
+      );
+
+
+
+      await requestCamera();
+
+
+
+      setStatus(
+        "✅ 相機權限正常\n正在準備卡片辨識…"
+      );
+
+
+
+      const mindUrl =
+        await compileTarget();
+
+
+
+      setStatus(
+        "✅ 準備完成"
+      );
+
+
+
+      overlay.style.display =
+        "none";
+
+
+
+      hint.style.display =
+        "block";
+
+
+
+      hint.textContent =
+        "把鏡頭對準卡片";
+
+
+
+      mountAR(
+        mindUrl
+      );
+
+
+
+    }
+
+    catch (error) {
+
+
+      console.error(
+        error
+      );
+
+
+      let message =
+
+        error?.message
+
+        ||
+
+        String(error);
+
+
+
+      if (
+        error?.name ===
+        "NotAllowedError"
+      ) {
+
+        message =
+
+          "相機權限被拒絕。\n\n" +
+
+          "請使用 Chrome / Safari 開啟，" +
+
+          "並允許網站使用相機。";
+
+      }
+
+
+
+      setStatus(
+
+        "❌ 啟動失敗\n\n" +
+
+        message
+
+      );
+
+
+
+      startBtn.disabled =
+        false;
+
+
+      starting =
+        false;
+
+
+    }
+
 
   }
-);
 
-
-fileInput.addEventListener(
-  "change",
-  ()=>{
-
-    if(
-      !fileInput.files?.[0]
-    ) return;
-
-    selectedTargetFile =
-      fileInput.files[0];
-
-    pickBtn.style.display =
-      "none";
-
-    starting=false;
-
-    startBtn.disabled=false;
-
-    say(
-      "✅ 已選擇辨識原圖\n"+
-      "再按一次「開始掃描」。"
-    );
-
-  }
 );
 
 </script>
 
+
 </body>
+
 </html>
